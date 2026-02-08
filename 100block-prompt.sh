@@ -1,11 +1,18 @@
 #!/bin/bash
 
-LOGFILE="$HOME/Desktop/100block-log.txt"
+LOGDIR="$HOME/Desktop"
 LOCKFILE="/tmp/100block.lock"
 
-# Acquire exclusive lock — if a previous prompt is still open, exit silently
+logfile() {
+    echo "$LOGDIR/100block-$(date '+%Y-%m-%d').txt"
+}
+
+# Acquire exclusive lock — if a previous prompt is still open, log a skip and exit
 exec 9>"$LOCKFILE"
-flock -n 9 || exit 0
+if ! flock -n 9; then
+    echo "[$(date '+%I:%M %p')]" >> "$(logfile)"
+    exit 0
+fi
 
 # Ensure display is available (for systemd user service)
 export DISPLAY="${DISPLAY:-:0.0}"
@@ -18,5 +25,5 @@ TEXT=$(zenity --entry \
     2>/dev/null)
 
 if [ -n "$TEXT" ]; then
-    echo "[$(date '+%A, %B %d %Y — %I:%M %p')]  $TEXT" >> "$LOGFILE"
+    echo "[$(date '+%I:%M %p')]  $TEXT" >> "$(logfile)"
 fi
